@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   client:
     build:
@@ -57,3 +55,43 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=emartdbpass
       - MYSQL_DATABASE=books
+
+  
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+      - '--collector.filesystem.ignored-fs-types=^(vboxsf)$'  # Ignore VirtualBox Shared Folders
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--web.enable-lifecycle'
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  prometheus-data: {}
+  grafana-data: {}
+
